@@ -2,7 +2,8 @@ import React, { useState, useEffect } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "@fortawesome/fontawesome-free/css/all.min.css";
 import { supabase } from "../../lib/supabase";
-import { useNavigate } from "react-router-dom"; // For redirect after logout
+import { useNavigate } from "react-router-dom";
+import { ethers } from "ethers";
 
 const initialHospitalForm = {
   name: "",
@@ -18,6 +19,55 @@ const initialHospitalForm = {
   address: "",
   website: "",
 };
+
+const contractAddress = "0xD7ACd2a9FD159E69Bb102A1ca21C9a3e3A5F771B";
+
+const contractABI = [
+  {
+    "inputs": [
+      {
+        "components": [
+          { "internalType": "string", "name": "name", "type": "string" },
+          { "internalType": "string", "name": "licenseNo", "type": "string" },
+          { "internalType": "string", "name": "specialization", "type": "string" },
+          { "internalType": "uint256", "name": "experience", "type": "uint256" },
+          { "internalType": "string", "name": "phone", "type": "string" },
+          { "internalType": "string", "name": "email", "type": "string" },
+          { "internalType": "string", "name": "hospital", "type": "string" }
+        ],
+        "internalType": "struct ValidationContract.Doctor",
+        "name": "doctor",
+        "type": "tuple"
+      }
+    ],
+    "name": "addDoctor",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "components": [
+          { "internalType": "string", "name": "name", "type": "string" },
+          { "internalType": "string", "name": "licenseId", "type": "string" },
+          { "internalType": "string", "name": "location", "type": "string" },
+          { "internalType": "string", "name": "contactNumber", "type": "string" },
+          { "internalType": "string", "name": "email", "type": "string" },
+          { "internalType": "uint256", "name": "beds", "type": "uint256" },
+          { "internalType": "string", "name": "departments", "type": "string" }
+        ],
+        "internalType": "struct ValidationContract.Hospital",
+        "name": "hospital",
+        "type": "tuple"
+      }
+    ],
+    "name": "addHospital",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  }
+];
 
 const initialDoctorForm = {
   name: "",
@@ -43,7 +93,8 @@ function AdminDashboard() {
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
-const navigate = useNavigate(); 
+  const navigate = useNavigate();
+
   // Hospital State
   const [hospitals, setHospitals] = useState([]);
   const [hospitalForm, setHospitalForm] = useState(initialHospitalForm);
@@ -52,21 +103,78 @@ const navigate = useNavigate();
 
   // Doctor State
   const [doctors, setDoctors] = useState([]);
-  const [donors, setDonors] = useState([]);
   const [doctorForm, setDoctorForm] = useState(initialDoctorForm);
   const [editingDoctorId, setEditingDoctorId] = useState(null);
   const [doctorSearch, setDoctorSearch] = useState("");
 
-  // Donor Search State
+  // Donor State
+  const [donors, setDonors] = useState([]);
   const [donorSearch, setDonorSearch] = useState("");
-//handle logout
+
+  // Appointment State
+  const [appointments, setAppointments] = useState([]);
+  const [appointmentSearch, setAppointmentSearch] = useState("");
+
+  // Blood Request State
+  const [bloodRequest, setBloodRequest] = useState("");
+
+  // Fetch user and data on mount
+  useEffect(() => {
+    const getUser = async () => {
+      const { data: { user }, error } = await supabase.auth.getUser();
+      if (error) console.error("Error fetching user:", error);
+      else setUser(user);
+    };
+
+    const fetchHospitals = async () => {
+      const { data, error } = await supabase.from("hospitals").select("*");
+      if (error) console.error("Error fetching hospitals:", error);
+      else setHospitals(data);
+    };
+
+    const fetchDoctors = async () => {
+      const { data, error } = await supabase.from("doctors").select("*");
+      if (error) console.error("Error fetching doctors:", error);
+      else setDoctors(data);
+    };
+
+    const fetchDonors = async () => {
+      const { data, error } = await supabase.from("registrations").select("*");
+      if (error) console.error("Error fetching donors:", error);
+      else setDonors(data);
+    };
+
+const fetchAppointments = async () => {
+  console.log("Fetching appointments started");
+  const { data, error } = await supabase.from("appointments").select("*");
+  if (error) {
+    console.error("Error fetching appointments:", error);
+  } else {
+    console.log("Appointments fetched:", data);
+    setAppointments(data);
+  }
+  console.log("Fetching appointments ended");
+};
+
+    getUser();
+    fetchHospitals();
+    fetchDoctors();
+    fetchDonors();
+    fetchAppointments();
+  }, []);
+
+  // Handlers
+  const handleHospitalChange = (e) => setHospitalForm({ ...hospitalForm, [e.target.name]: e.target.value });
+  const handleDoctorChange = (e) => setDoctorForm({ ...doctorForm, [e.target.name]: e.target.value });
+  const handleBloodRequestChange = (e) => setBloodRequest(e.target.value);
+
   const handleLogout = async () => {
     setLoading(true);
     try {
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
       setUser(null);
-      navigate("/admin-login"); // Redirect to login page
+      navigate("/admin-login");
     } catch (error) {
       setErrorMessage(`Error logging out: ${error.message}`);
       console.error("Error logging out:", error);
@@ -74,62 +182,8 @@ const navigate = useNavigate();
       setLoading(false);
     }
   };
-//handle hospital form submit
-  // Fetch user and data on mount
-  useEffect(() => {
-    const getUser = async () => {
-      const { data: { user }, error } = await supabase.auth.getUser();
-      if (error) {
-        console.error("Error fetching user:", error);
-      } else {
-        setUser(user);
-      }
-    };
 
-    const fetchHospitals = async () => {
-      const { data, error } = await supabase.from("hospitals").select("*");
-      if (error) {
-        console.error("Error fetching hospitals:", error);
-      } else {
-        setHospitals(data);
-      }
-    };
-
-    const fetchDonors = async () => {
-      const { data, error } = await supabase.from("registrations").select("*");
-      if (error) {
-        console.error("Error fetching donors:", error);
-      } else {
-        setDonors(data);
-      }
-    };
-
-    const fetchDoctors = async () => {
-      const { data, error } = await supabase.from("doctors").select("*");
-      if (error) {
-        console.error("Error fetching doctors:", error);
-      } else {
-        setDoctors(data);
-      }
-    };
-
-    getUser();
-    fetchHospitals();
-    fetchDoctors();
-    fetchDonors();
-  }, []);
-
-  // Handlers for Hospital Form changes
-  const handleHospitalChange = (e) => {
-    setHospitalForm({ ...hospitalForm, [e.target.name]: e.target.value });
-  };
-
-  // Handlers for Doctor Form changes
-  const handleDoctorChange = (e) => {
-    setDoctorForm({ ...doctorForm, [e.target.name]: e.target.value });
-  };
-
-  // Add or Update Hospital
+  // Hospital CRUD
   const submitHospital = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -152,19 +206,52 @@ const navigate = useNavigate();
     }
 
     try {
+      // Blockchain interaction
+      if (!window.ethereum) {
+        setErrorMessage("MetaMask is not installed.");
+        setLoading(false);
+        return;
+      }
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      await provider.send("eth_requestAccounts", []);
+      const signer = await provider.getSigner();
+      const contract = new ethers.Contract(contractAddress, contractABI, signer);
+
+      const tx = await contract.addHospital({
+        name: hospitalForm.name,
+        licenseId: hospitalForm.licenseId,
+        location: hospitalForm.location,
+        contactNumber: hospitalForm.contactNumber,
+        email: hospitalForm.email,
+        beds: Number(hospitalForm.beds),
+        departments: hospitalForm.departments,
+      });
+      await tx.wait();
+
+      // Check for duplicate email before insert/update
+      const { data: existingHospitals, error: fetchError } = await supabase
+        .from("hospitals")
+        .select("id")
+        .eq("email", hospitalForm.email);
+
+      if (fetchError) {
+        throw fetchError;
+      }
+
+      if (existingHospitals.length > 0 && (!editingHospitalId || existingHospitals[0].id !== editingHospitalId)) {
+        setErrorMessage("A hospital with this email already exists.");
+        setLoading(false);
+        return;
+      }
+
+      // Existing Supabase logic
       if (editingHospitalId) {
-        const { error } = await supabase
-          .from("hospitals")
-          .update(hospitalForm)
-          .eq("id", editingHospitalId);
+        const { error } = await supabase.from("hospitals").update(hospitalForm).eq("id", editingHospitalId);
         if (error) throw error;
         setHospitals(hospitals.map((h) => (h.id === editingHospitalId ? { ...hospitalForm, id: editingHospitalId } : h)));
         setSuccessMessage("Hospital updated successfully!");
       } else {
-        const { data, error } = await supabase
-          .from("hospitals")
-          .insert([{ ...hospitalForm, user_id: user.id }])
-          .select();
+        const { data, error } = await supabase.from("hospitals").insert([{ ...hospitalForm, user_id: user.id }]).select();
         if (error) throw error;
         setHospitals([...hospitals, data[0]]);
         setSuccessMessage("Hospital added successfully!");
@@ -180,7 +267,6 @@ const navigate = useNavigate();
     }
   };
 
-  // Edit Hospital
   const editHospital = (id) => {
     const hosp = hospitals.find((h) => h.id === id);
     setHospitalForm(hosp);
@@ -188,7 +274,6 @@ const navigate = useNavigate();
     setActivePage("addHospital");
   };
 
-  // Delete Hospital
   const deleteHospital = async (id) => {
     if (window.confirm("Are you sure you want to delete this hospital?")) {
       setLoading(true);
@@ -206,7 +291,7 @@ const navigate = useNavigate();
     }
   };
 
-  // Add or Update Doctor
+  // Doctor CRUD
   const submitDoctor = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -229,19 +314,36 @@ const navigate = useNavigate();
     }
 
     try {
+      // Blockchain interaction
+      if (!window.ethereum) {
+        setErrorMessage("MetaMask is not installed.");
+        setLoading(false);
+        return;
+      }
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      await provider.send("eth_requestAccounts", []);
+      const signer = await provider.getSigner();
+      const contract = new ethers.Contract(contractAddress, contractABI, signer);
+
+      const tx = await contract.addDoctor({
+        name: doctorForm.name,
+        licenseNo: doctorForm.licenseNo,
+        specialization: doctorForm.specialization,
+        experience: Number(doctorForm.experience),
+        phone: doctorForm.phone,
+        email: doctorForm.email,
+        hospital: doctorForm.hospital,
+      });
+      await tx.wait();
+
+      // Existing Supabase logic
       if (editingDoctorId) {
-        const { error } = await supabase
-          .from("doctors")
-          .update(doctorForm)
-          .eq("id", editingDoctorId);
+        const { error } = await supabase.from("doctors").update(doctorForm).eq("id", editingDoctorId);
         if (error) throw error;
         setDoctors(doctors.map((d) => (d.id === editingDoctorId ? { ...doctorForm, id: editingDoctorId } : d)));
         setSuccessMessage("Doctor updated successfully!");
       } else {
-        const { data, error } = await supabase
-          .from("doctors")
-          .insert([{ ...doctorForm, user_id: user.id }])
-          .select();
+        const { data, error } = await supabase.from("doctors").insert([{ ...doctorForm, user_id: user.id }]).select();
         if (error) throw error;
         setDoctors([...doctors, data[0]]);
         setSuccessMessage("Doctor added successfully!");
@@ -257,7 +359,6 @@ const navigate = useNavigate();
     }
   };
 
-  // Edit Doctor
   const editDoctor = (id) => {
     const doc = doctors.find((d) => d.id === id);
     setDoctorForm(doc);
@@ -265,7 +366,6 @@ const navigate = useNavigate();
     setActivePage("addDoctor");
   };
 
-  // Delete Doctor
   const deleteDoctor = async (id) => {
     if (window.confirm("Are you sure you want to delete this doctor?")) {
       setLoading(true);
@@ -280,6 +380,72 @@ const navigate = useNavigate();
       } finally {
         setLoading(false);
       }
+    }
+  };
+
+  // Blood Request
+  const submitBloodRequest = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setErrorMessage("");
+    setSuccessMessage("");
+
+    if (!user) {
+      setErrorMessage("You must be logged in to perform this action.");
+      setLoading(false);
+      return;
+    }
+
+    if (!bloodRequest) {
+      setErrorMessage("Please enter a blood group.");
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from("blood_requests")
+        .insert([{ blood_group: bloodRequest, user_id: user.id, requested_at: new Date().toISOString() }])
+        .select();
+      if (error) throw error;
+      setSuccessMessage("Blood group request submitted successfully!");
+      setBloodRequest("");
+    } catch (error) {
+      setErrorMessage(`Error submitting request: ${error.message}`);
+      console.error("Error submitting blood request:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Appointment Approval/Rejection
+  const approveAppointment = async (id) => {
+    setLoading(true);
+    try {
+      const { error } = await supabase.from("appointments").update({ status: "approved" }).eq("id", id);
+      if (error) throw error;
+      setAppointments(appointments.map((a) => (a.id === id ? { ...a, status: "approved" } : a)));
+      setSuccessMessage("Appointment approved successfully!");
+    } catch (error) {
+      setErrorMessage(`Error approving appointment: ${error.message}`);
+      console.error("Error approving appointment:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const rejectAppointment = async (id) => {
+    setLoading(true);
+    try {
+      const { error } = await supabase.from("appointments").update({ status: "rejected" }).eq("id", id);
+      if (error) throw error;
+      setAppointments(appointments.map((a) => (a.id === id ? { ...a, status: "rejected" } : a)));
+      setSuccessMessage("Appointment rejected successfully!");
+    } catch (error) {
+      setErrorMessage(`Error rejecting appointment: ${error.message}`);
+      console.error("Error rejecting appointment:", error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -300,6 +466,12 @@ const navigate = useNavigate();
     (d) =>
       d.name.toLowerCase().includes(donorSearch.toLowerCase()) ||
       d.cnic.toLowerCase().includes(donorSearch.toLowerCase())
+  );
+
+  const filteredAppointments = appointments.filter(
+    (a) =>
+      a.name.toLowerCase().includes(appointmentSearch.toLowerCase()) ||
+      a.blood_group.toLowerCase().includes(appointmentSearch.toLowerCase())
   );
 
   // Render Pages
@@ -331,6 +503,13 @@ const navigate = useNavigate();
                   <p className="fs-2 fw-bold text-danger">{donors.length}</p>
                 </div>
               </div>
+              <div className="col-md-4 mb-3">
+                <div className="card shadow-sm p-4 text-center" style={{ borderRadius: "10px", boxShadow: "0 4px 8px rgba(0,0,0,0.1)", border: "none" }}>
+                  <i className="fas fa-calendar-check fa-3x text-danger mb-3"></i>
+                  <h5>Pending Appointments</h5>
+                  <p className="fs-2 fw-bold text-danger">{appointments.filter(a => a.status === "pending").length}</p>
+                </div>
+              </div>
             </div>
           </div>
         );
@@ -341,163 +520,62 @@ const navigate = useNavigate();
             <h3 className="mb-4 text-danger">{editingHospitalId ? "Edit Hospital" : "Add Hospital"}</h3>
             {errorMessage && <div className="alert alert-danger">{errorMessage}</div>}
             {successMessage && <div className="alert alert-success">{successMessage}</div>}
+            {loading && <div className="spinner-border text-danger" role="status"><span className="visually-hidden">Loading...</span></div>}
             <form onSubmit={submitHospital}>
               <div className="row">
                 <div className="col-md-6 mb-3">
                   <label className="form-label">Hospital Name *</label>
-                  <input
-                    type="text"
-                    name="name"
-                    value={hospitalForm.name}
-                    onChange={handleHospitalChange}
-                    required
-                    className="form-control"
-                    placeholder="Enter hospital name"
-                  />
+                  <input type="text" name="name" value={hospitalForm.name} onChange={handleHospitalChange} required className="form-control" placeholder="Enter hospital name" />
                 </div>
                 <div className="col-md-6 mb-3">
                   <label className="form-label">License ID</label>
-                  <input
-                    type="text"
-                    name="licenseId"
-                    value={hospitalForm.licenseId}
-                    onChange={handleHospitalChange}
-                    className="form-control"
-                    placeholder="License ID"
-                  />
+                  <input type="text" name="licenseId" value={hospitalForm.licenseId} onChange={handleHospitalChange} className="form-control" placeholder="License ID" />
                 </div>
                 <div className="col-md-6 mb-3">
                   <label className="form-label">Location *</label>
-                  <input
-                    type="text"
-                    name="location"
-                    value={hospitalForm.location}
-                    onChange={handleHospitalChange}
-                    required
-                    className="form-control"
-                    placeholder="City/Area"
-                  />
+                  <input type="text" name="location" value={hospitalForm.location} onChange={handleHospitalChange} required className="form-control" placeholder="City/Area" />
                 </div>
                 <div className="col-md-6 mb-3">
                   <label className="form-label">Contact Number *</label>
-                  <input
-                    type="tel"
-                    name="contactNumber"
-                    value={hospitalForm.contactNumber}
-                    onChange={handleHospitalChange}
-                    required
-                    className="form-control"
-                    placeholder="+92XXXXXXXXXX"
-                  />
+                  <input type="tel" name="contactNumber" value={hospitalForm.contactNumber} onChange={handleHospitalChange} required className="form-control" placeholder="+92XXXXXXXXXX" />
                 </div>
                 <div className="col-md-6 mb-3">
                   <label className="form-label">Email *</label>
-                  <input
-                    type="email"
-                    name="email"
-                    value={hospitalForm.email}
-                    onChange={handleHospitalChange}
-                    required
-                    className="form-control"
-                    placeholder="email@example.com"
-                  />
+                  <input type="email" name="email" value={hospitalForm.email} onChange={handleHospitalChange} required className="form-control" placeholder="email@example.com" />
                 </div>
                 <div className="col-md-6 mb-3">
                   <label className="form-label">Number of Beds *</label>
-                  <input
-                    type="number"
-                    name="beds"
-                    value={hospitalForm.beds}
-                    onChange={handleHospitalChange}
-                    required
-                    className="form-control"
-                    placeholder="e.g., 100"
-                  />
+                  <input type="number" name="beds" value={hospitalForm.beds} onChange={handleHospitalChange} required className="form-control" placeholder="e.g., 100" />
                 </div>
                 <div className="col-md-6 mb-3">
                   <label className="form-label">Departments *</label>
-                  <input
-                    type="text"
-                    name="departments"
-                    value={hospitalForm.departments}
-                    onChange={handleHospitalChange}
-                    required
-                    className="form-control"
-                    placeholder="e.g., Cardiology, Pediatrics"
-                  />
+                  <input type="text" name="departments" value={hospitalForm.departments} onChange={handleHospitalChange} required className="form-control" placeholder="e.g., Cardiology, Pediatrics" />
                 </div>
                 <div className="col-md-6 mb-3">
                   <label className="form-label">Rating (out of 5)</label>
-                  <input
-                    type="number"
-                    step="0.1"
-                    min="0"
-                    max="5"
-                    name="rating"
-                    value={hospitalForm.rating}
-                    onChange={handleHospitalChange}
-                    className="form-control"
-                    placeholder="e.g., 4.5"
-                  />
+                  <input type="number" step="0.1" min="0" max="5" name="rating" value={hospitalForm.rating} onChange={handleHospitalChange} className="form-control" placeholder="e.g., 4.5" />
                 </div>
                 <div className="col-md-6 mb-3">
                   <label className="form-label">Established Year</label>
-                  <input
-                    type="number"
-                    name="establishedYear"
-                    value={hospitalForm.establishedYear}
-                    onChange={handleHospitalChange}
-                    className="form-control"
-                    placeholder="e.g., 1999"
-                  />
+                  <input type="number" name="establishedYear" value={hospitalForm.establishedYear} onChange={handleHospitalChange} className="form-control" placeholder="e.g., 1999" />
                 </div>
                 <div className="col-md-6 mb-3">
                   <label className="form-label">Manager Name</label>
-                  <input
-                    type="text"
-                    name="manager"
-                    value={hospitalForm.manager}
-                    onChange={handleHospitalChange}
-                    className="form-control"
-                    placeholder="Manager's name"
-                  />
+                  <input type="text" name="manager" value={hospitalForm.manager} onChange={handleHospitalChange} className="form-control" placeholder="Manager's name" />
                 </div>
                 <div className="col-md-6 mb-3">
                   <label className="form-label">Address</label>
-                  <input
-                    type="text"
-                    name="address"
-                    value={hospitalForm.address}
-                    onChange={handleHospitalChange}
-                    className="form-control"
-                    placeholder="Full address"
-                  />
+                  <input type="text" name="address" value={hospitalForm.address} onChange={handleHospitalChange} className="form-control" placeholder="Full address" />
                 </div>
                 <div className="col-md-6 mb-3">
                   <label className="form-label">Website</label>
-                  <input
-                    type="url"
-                    name="website"
-                    value={hospitalForm.website}
-                    onChange={handleHospitalChange}
-                    className="form-control"
-                    placeholder="https://example.com"
-                  />
+                  <input type="url" name="website" value={hospitalForm.website} onChange={handleHospitalChange} className="form-control" placeholder="https://example.com" />
                 </div>
               </div>
               <button type="submit" className="btn btn-danger me-2" disabled={loading}>
                 {loading ? "Processing..." : editingHospitalId ? "Update Hospital" : "Add Hospital"}
               </button>
-              <button
-                type="button"
-                className="btn btn-secondary"
-                onClick={() => {
-                  setHospitalForm(initialHospitalForm);
-                  setEditingHospitalId(null);
-                  setActivePage("viewHospitals");
-                }}
-                disabled={loading}
-              >
+              <button type="button" className="btn btn-secondary" onClick={() => { setHospitalForm(initialHospitalForm); setEditingHospitalId(null); setActivePage("viewHospitals"); }} disabled={loading}>
                 Cancel
               </button>
             </form>
@@ -510,22 +588,10 @@ const navigate = useNavigate();
             <h3 className="mb-4 text-danger">Hospitals List</h3>
             {errorMessage && <div className="alert alert-danger">{errorMessage}</div>}
             {successMessage && <div className="alert alert-success">{successMessage}</div>}
+            {loading && <div className="spinner-border text-danger" role="status"><span className="visually-hidden">Loading...</span></div>}
             <div className="mb-3 d-flex justify-content-between align-items-center">
-              <input
-                type="text"
-                className="form-control w-50"
-                placeholder="Search hospitals by name or location"
-                value={hospitalSearch}
-                onChange={(e) => setHospitalSearch(e.target.value)}
-              />
-              <button
-                className="btn btn-danger"
-                onClick={() => {
-                  setHospitalForm(initialHospitalForm);
-                  setEditingHospitalId(null);
-                  setActivePage("addHospital");
-                }}
-              >
+              <input type="text" className="form-control w-50" placeholder="Search hospitals by name or location" value={hospitalSearch} onChange={(e) => setHospitalSearch(e.target.value)} />
+              <button className="btn btn-danger" onClick={() => { setHospitalForm(initialHospitalForm); setEditingHospitalId(null); setActivePage("addHospital"); }}>
                 <i className="fas fa-plus me-2"></i>Add Hospital
               </button>
             </div>
@@ -557,18 +623,8 @@ const navigate = useNavigate();
                         <td>{h.departments}</td>
                         <td>{h.rating || "N/A"}</td>
                         <td>
-                          <button
-                            className="btn btn-sm btn-outline-primary me-2"
-                            onClick={() => editHospital(h.id)}
-                          >
-                            Edit
-                          </button>
-                          <button
-                            className="btn btn-sm btn-outline-danger"
-                            onClick={() => deleteHospital(h.id)}
-                          >
-                            Delete
-                          </button>
+                          <button className="btn btn-sm btn-outline-primary me-2" onClick={() => editHospital(h.id)}>Edit</button>
+                          <button className="btn btn-sm btn-outline-danger" onClick={() => deleteHospital(h.id)}>Delete</button>
                         </td>
                       </tr>
                     ))}
@@ -585,28 +641,17 @@ const navigate = useNavigate();
             <h3 className="mb-4 text-danger">{editingDoctorId ? "Edit Doctor" : "Add Doctor"}</h3>
             {errorMessage && <div className="alert alert-danger">{errorMessage}</div>}
             {successMessage && <div className="alert alert-success">{successMessage}</div>}
+            {loading && <div className="spinner-border text-danger" role="status"><span className="visually-hidden">Loading...</span></div>}
             <form onSubmit={submitDoctor}>
               <div className="row">
                 {Object.entries(doctorForm).map(([key, value], idx) => (
                   <div className="col-md-6 mb-3" key={idx}>
                     <label className="form-label">
-                      {key
-                        .replace(/([A-Z])/g, " $1")
-                        .replace(/^./, (str) => str.toUpperCase())}
-                      {["name", "specialization", "hospital", "experience", "phone", "email"].includes(key)
-                        ? " *"
-                        : ""}
+                      {key.replace(/([A-Z])/g, " $1").replace(/^./, (str) => str.toUpperCase())}
+                      {["name", "specialization", "hospital", "experience", "phone", "email"].includes(key) ? " *" : ""}
                     </label>
                     <input
-                      type={
-                        key === "email"
-                          ? "email"
-                          : key === "phone"
-                          ? "tel"
-                          : key === "experience" || key === "fee" || key === "age"
-                          ? "number"
-                          : "text"
-                      }
+                      type={key === "email" ? "email" : key === "phone" ? "tel" : key === "experience" || key === "fee" || key === "age" ? "number" : "text"}
                       name={key}
                       value={value}
                       onChange={handleDoctorChange}
@@ -621,16 +666,7 @@ const navigate = useNavigate();
               <button type="submit" className="btn btn-danger me-2" disabled={loading}>
                 {loading ? "Processing..." : editingDoctorId ? "Update Doctor" : "Add Doctor"}
               </button>
-              <button
-                type="button"
-                className="btn btn-secondary"
-                onClick={() => {
-                  setDoctorForm(initialDoctorForm);
-                  setEditingDoctorId(null);
-                  setActivePage("viewDoctors");
-                }}
-                disabled={loading}
-              >
+              <button type="button" className="btn btn-secondary" onClick={() => { setDoctorForm(initialDoctorForm); setEditingDoctorId(null); setActivePage("viewDoctors"); }} disabled={loading}>
                 Cancel
               </button>
             </form>
@@ -643,22 +679,10 @@ const navigate = useNavigate();
             <h3 className="mb-4 text-danger">Doctors List</h3>
             {errorMessage && <div className="alert alert-danger">{errorMessage}</div>}
             {successMessage && <div className="alert alert-success">{successMessage}</div>}
+            {loading && <div className="spinner-border text-danger" role="status"><span className="visually-hidden">Loading...</span></div>}
             <div className="mb-3 d-flex justify-content-between align-items-center">
-              <input
-                type="text"
-                className="form-control w-50"
-                placeholder="Search doctors by name or specialization"
-                value={doctorSearch}
-                onChange={(e) => setDoctorSearch(e.target.value)}
-              />
-              <button
-                className="btn btn-danger"
-                onClick={() => {
-                  setDoctorForm(initialDoctorForm);
-                  setEditingDoctorId(null);
-                  setActivePage("addDoctor");
-                }}
-              >
+              <input type="text" className="form-control w-50" placeholder="Search doctors by name or specialization" value={doctorSearch} onChange={(e) => setDoctorSearch(e.target.value)} />
+              <button className="btn btn-danger" onClick={() => { setDoctorForm(initialDoctorForm); setEditingDoctorId(null); setActivePage("addDoctor"); }}>
                 <i className="fas fa-plus me-2"></i>Add Doctor
               </button>
             </div>
@@ -688,18 +712,8 @@ const navigate = useNavigate();
                         <td>{d.phone}</td>
                         <td>{d.email}</td>
                         <td>
-                          <button
-                            className="btn btn-sm btn-outline-primary me-2"
-                            onClick={() => editDoctor(d.id)}
-                          >
-                            Edit
-                          </button>
-                          <button
-                            className="btn btn-sm btn-outline-danger"
-                            onClick={() => deleteDoctor(d.id)}
-                          >
-                            Delete
-                          </button>
+                          <button className="btn btn-sm btn-outline-primary me-2" onClick={() => editDoctor(d.id)}>Edit</button>
+                          <button className="btn btn-sm btn-outline-danger" onClick={() => deleteDoctor(d.id)}>Delete</button>
                         </td>
                       </tr>
                     ))}
@@ -716,14 +730,9 @@ const navigate = useNavigate();
             <h3 className="mb-4 text-danger">Donors List</h3>
             {errorMessage && <div className="alert alert-danger">{errorMessage}</div>}
             {successMessage && <div className="alert alert-success">{successMessage}</div>}
+            {loading && <div className="spinner-border text-danger" role="status"><span className="visually-hidden">Loading...</span></div>}
             <div className="mb-3 d-flex justify-content-between align-items-center">
-              <input
-                type="text"
-                className="form-control w-50"
-                placeholder="Search donors by name or CNIC"
-                value={donorSearch}
-                onChange={(e) => setDonorSearch(e.target.value)}
-              />
+              <input type="text" className="form-control w-50" placeholder="Search donors by name or CNIC" value={donorSearch} onChange={(e) => setDonorSearch(e.target.value)} />
             </div>
             {filteredDonors.length === 0 ? (
               <p>No donors found.</p>
@@ -760,12 +769,86 @@ const navigate = useNavigate();
           </div>
         );
 
+      case "requestBlood":
+        return (
+          <div>
+            <h3 className="mb-4 text-danger">Request Blood Group</h3>
+            {errorMessage && <div className="alert alert-danger">{errorMessage}</div>}
+            {successMessage && <div className="alert alert-success">{successMessage}</div>}
+            {loading && <div className="spinner-border text-danger" role="status"><span className="visually-hidden">Loading...</span></div>}
+            <form onSubmit={submitBloodRequest}>
+              <div className="mb-3">
+                <label className="form-label">Blood Group *</label>
+                <input type="text" className="form-control" placeholder="e.g., A+, B-, O+" value={bloodRequest} onChange={handleBloodRequestChange} required />
+              </div>
+              <button type="submit" className="btn btn-danger me-2" disabled={loading}>
+                {loading ? "Processing..." : "Submit Request"}
+              </button>
+              <button type="button" className="btn btn-secondary" onClick={() => setBloodRequest("")} disabled={loading}>
+                Clear
+              </button>
+            </form>
+          </div>
+        );
+
+      case "viewAppointments":
+        return (
+          <div>
+            <h3 className="mb-4 text-danger">Appointments List</h3>
+            {errorMessage && <div className="alert alert-danger">{errorMessage}</div>}
+            {successMessage && <div className="alert alert-success">{successMessage}</div>}
+            {loading && <div className="spinner-border text-danger" role="status"><span className="visually-hidden">Loading...</span></div>}
+            <div className="mb-3 d-flex justify-content-between align-items-center">
+              <input type="text" className="form-control w-50" placeholder="Search appointments by name or blood group" value={appointmentSearch} onChange={(e) => setAppointmentSearch(e.target.value)} />
+            </div>
+            {filteredAppointments.length === 0 ? (
+              <p>No appointments found.</p>
+            ) : (
+              <div className="table-responsive">
+                <table className="table table-striped table-hover">
+                  <thead className="table-danger">
+                    <tr>
+                      <th>Name</th>
+                      <th>Blood Group</th>
+                      <th>Medical History</th>
+                      <th>Contact</th>
+                      <th>Requested At</th>
+                      <th>Status</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredAppointments.map((a) => (
+                      <tr key={a.id}>
+                        <td>{a.name}</td>
+                        <td>{a.blood_group}</td>
+                        <td>{a.medical_history || "N/A"}</td>
+                        <td>{a.contact}</td>
+                        <td>{new Date(a.requested_at).toLocaleString()}</td>
+                        <td>{a.status}</td>
+                        <td>
+                          {a.status === "pending" && (
+                            <>
+                              <button className="btn btn-sm btn-success me-2" onClick={() => approveAppointment(a.id)} disabled={loading}>Approve</button>
+                              <button className="btn btn-sm btn-danger" onClick={() => rejectAppointment(a.id)} disabled={loading}>Reject</button>
+                            </>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        );
+
       default:
         return <div>Page not found</div>;
     }
   };
 
-  // Sidebar Navigation Items
+  // Sidebar Navigation
   const navItems = [
     { page: "dashboard", icon: "tachometer-alt", label: "Dashboard" },
     { page: "addHospital", icon: "hospital", label: "Add Hospital" },
@@ -773,11 +856,12 @@ const navigate = useNavigate();
     { page: "addDoctor", icon: "user-md", label: "Add Doctor" },
     { page: "viewDoctors", icon: "users", label: "View Doctors" },
     { page: "viewDonors", icon: "user-friends", label: "View Donors" },
+    { page: "requestBlood", icon: "tint", label: "Request Blood Group" },
+    { page: "viewAppointments", icon: "calendar-check", label: "View Appointments" },
   ];
 
   return (
     <div className="d-flex vh-100 overflow-hidden" style={{ fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif", backgroundColor: "#f8f9fa" }}>
-      {/* Sidebar */}
       <div className="bg-danger text-white flex-shrink-0" style={{ width: "230px", backgroundColor: "#c82333" }}>
         <div className="p-3 border-bottom border-white">
           <h3 className="mb-0">Blood Link Admin</h3>
@@ -795,20 +879,15 @@ const navigate = useNavigate();
           ))}
         </nav>
         <div className="mt-auto p-3 border-top border-white">
-          <button className="btn btn-outline-light w-100" onClick={handleLogout}>
+          <button className="btn btn-outline-light w-100" onClick={handleLogout} disabled={loading}>
             <i className="fas fa-sign-out-alt me-2"></i>Logout
           </button>
         </div>
       </div>
-
-      {/* Main Content */}
       <div className="flex-grow-1 d-flex flex-column">
-        {/* Top Navbar */}
         <nav className="navbar navbar-light bg-light px-4 shadow-sm">
           <span className="navbar-brand mb-0 h1 text-danger">Blood Link Admin Panel</span>
         </nav>
-
-        {/* Content Area */}
         <main className="p-5 overflow-auto" style={{ height: "calc(100vh - 56px)" }}>
           {renderContent()}
         </main>
