@@ -1,12 +1,6 @@
-import React from 'react'
-import { Text, View } from 'react-native'
 
-const explore = () => {
-  return (
-    <View>
-      <Text>explore</Text>
-    </View>
-  )
+import SearchScreen from "@/screens/tabs/search"
+
+export default ()=>{
+  return (<SearchScreen/>)
 }
-
-export default explore

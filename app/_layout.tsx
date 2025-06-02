@@ -18,7 +18,7 @@ export default function RootLayout() {
     async function checkSession() {
       try {
         const session = await supabase.auth.session();
-        console.log('Supabase session:', session);
+        //console.log('Supabase session:', session);
         if (session && session.user && session.user.email_confirmed_at) {
           setInitialRoute('(tabs)');
         } else {
@@ -46,6 +46,11 @@ export default function RootLayout() {
     <GluestackUIProvider mode="light">
       <Stack initialRouteName={initialRoute}>
         <Stack.Screen name="index" options={{ headerShown: false, animation: 'slide_from_right' }} />
+        <Stack.Screen name="drawer" options={{ headerShown: false, animation: 'slide_from_left' }} />
+        <Stack.Screen name="doctors" options={{ headerShown: true,headerStyle:{backgroundColor:'black'},headerTitle:'Doctors',headerTitleAlign:'center',headerTintColor:'white', animation: 'slide_from_left' }} />
+        <Stack.Screen name="hospitals" options={{ headerShown: true, headerStyle:{backgroundColor:'black'},headerTitle:'Hospitals',headerTitleAlign:'center',headerTintColor:'white',animation: 'slide_from_left' }} />
+        <Stack.Screen name="doctorsdetails" options={{ headerShown: false, animation: 'slide_from_right' }} />
+        <Stack.Screen name="hospitaldetails" options={{ headerShown: false, animation: 'slide_from_right' }} />
         <Stack.Screen name="signin" options={{ headerShown: false, animation: 'slide_from_right' }} />
         <Stack.Screen name="Auth" options={{ headerShown: false, animation: 'slide_from_right' }} />
         <Stack.Screen name="registeration" options={{ headerShown: false, animation: 'slide_from_right' }} />

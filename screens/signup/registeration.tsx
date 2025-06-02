@@ -143,7 +143,7 @@ export default function RegistrationScreen() {
           disabled={loading}
         >
           <Text style={styles.buttonText}>
-            {loading ? 'Registering...' : 'Continue to MetaMask'}
+            {loading ? 'Registering...' : 'Continue to BloodLink'}
           </Text>
         </TouchableOpacity>
 

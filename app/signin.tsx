@@ -49,7 +49,7 @@ export default function SignInScreen() {
         password,
       });
 
-      console.log('SignIn response:', { user, session, error });
+      //console.log('SignIn response:', { user, session, error });
 
       if (error) {
         Alert.alert('Sign In Error', error.message);
