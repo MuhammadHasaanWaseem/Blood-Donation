@@ -93,6 +93,7 @@ function AdminDashboard() {
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const navigate = useNavigate();
 
   // Hospital State
@@ -483,31 +484,79 @@ const fetchAppointments = async () => {
             <h3 className="mb-4 text-danger">Dashboard Overview</h3>
             <div className="row">
               <div className="col-md-4 mb-3">
-                <div className="card shadow-sm p-4 text-center" style={{ borderRadius: "10px", boxShadow: "0 4px 8px rgba(0,0,0,0.1)", border: "none" }}>
-                  <i className="fas fa-hospital fa-3x text-danger mb-3"></i>
+                <div
+                  className="card shadow-sm p-4 text-center"
+                  style={{
+                    borderRadius: "15px",
+                    background: "linear-gradient(135deg, #f44336, #d32f2f)",
+                    color: "white",
+                    boxShadow: "0 8px 16px rgba(244, 67, 54, 0.4)",
+                    border: "none",
+                    transition: "transform 0.3s ease",
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.transform = "scale(1.05)"}
+                  onMouseLeave={e => e.currentTarget.style.transform = "scale(1)"}
+                >
+                  <i className="fas fa-hospital fa-3x mb-3"></i>
                   <h5>Total Hospitals</h5>
-                  <p className="fs-2 fw-bold text-danger">{hospitals.length}</p>
+                  <p className="fs-2 fw-bold">{hospitals.length}</p>
                 </div>
               </div>
               <div className="col-md-4 mb-3">
-                <div className="card shadow-sm p-4 text-center" style={{ borderRadius: "10px", boxShadow: "0 4px 8px rgba(0,0,0,0.1)", border: "none" }}>
-                  <i className="fas fa-user-md fa-3x text-danger mb-3"></i>
+                <div
+                  className="card shadow-sm p-4 text-center"
+                  style={{
+                    borderRadius: "15px",
+                    background: "linear-gradient(135deg, #e91e63, #c2185b)",
+                    color: "white",
+                    boxShadow: "0 8px 16px rgba(233, 30, 99, 0.4)",
+                    border: "none",
+                    transition: "transform 0.3s ease",
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.transform = "scale(1.05)"}
+                  onMouseLeave={e => e.currentTarget.style.transform = "scale(1)"}
+                >
+                  <i className="fas fa-user-md fa-3x mb-3"></i>
                   <h5>Total Doctors</h5>
-                  <p className="fs-2 fw-bold text-danger">{doctors.length}</p>
+                  <p className="fs-2 fw-bold">{doctors.length}</p>
                 </div>
               </div>
               <div className="col-md-4 mb-3">
-                <div className="card shadow-sm p-4 text-center" style={{ borderRadius: "10px", boxShadow: "0 4px 8px rgba(0,0,0,0.1)", border: "none" }}>
-                  <i className="fas fa-user-friends fa-3x text-danger mb-3"></i>
+                <div
+                  className="card shadow-sm p-4 text-center"
+                  style={{
+                    borderRadius: "15px",
+                    background: "linear-gradient(135deg, #9c27b0, #7b1fa2)",
+                    color: "white",
+                    boxShadow: "0 8px 16px rgba(156, 39, 176, 0.4)",
+                    border: "none",
+                    transition: "transform 0.3s ease",
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.transform = "scale(1.05)"}
+                  onMouseLeave={e => e.currentTarget.style.transform = "scale(1)"}
+                >
+                  <i className="fas fa-user-friends fa-3x mb-3"></i>
                   <h5>Total Donors</h5>
-                  <p className="fs-2 fw-bold text-danger">{donors.length}</p>
+                  <p className="fs-2 fw-bold">{donors.length}</p>
                 </div>
               </div>
               <div className="col-md-4 mb-3">
-                <div className="card shadow-sm p-4 text-center" style={{ borderRadius: "10px", boxShadow: "0 4px 8px rgba(0,0,0,0.1)", border: "none" }}>
-                  <i className="fas fa-calendar-check fa-3x text-danger mb-3"></i>
+                <div
+                  className="card shadow-sm p-4 text-center"
+                  style={{
+                    borderRadius: "15px",
+                    background: "linear-gradient(135deg, #ff5722, #e64a19)",
+                    color: "white",
+                    boxShadow: "0 8px 16px rgba(255, 87, 34, 0.4)",
+                    border: "none",
+                    transition: "transform 0.3s ease",
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.transform = "scale(1.05)"}
+                  onMouseLeave={e => e.currentTarget.style.transform = "scale(1)"}
+                >
+                  <i className="fas fa-calendar-check fa-3x mb-3"></i>
                   <h5>Pending Appointments</h5>
-                  <p className="fs-2 fw-bold text-danger">{appointments.filter(a => a.status === "pending").length}</p>
+                  <p className="fs-2 fw-bold">{appointments.filter(a => a.status === "pending").length}</p>
                 </div>
               </div>
             </div>
@@ -862,25 +911,94 @@ const fetchAppointments = async () => {
 
   return (
     <div className="d-flex vh-100 overflow-hidden" style={{ fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif", backgroundColor: "#f8f9fa" }}>
-      <div className="bg-danger text-white flex-shrink-0" style={{ width: "230px", backgroundColor: "#c82333" }}>
-        <div className="p-3 border-bottom border-white">
-          <h3 className="mb-0">Blood Link Admin</h3>
+      <div
+        className={`text-white flex-shrink-0 d-flex flex-column`}
+        style={{
+          width: sidebarCollapsed ? "60px" : "230px",
+          background: "linear-gradient(135deg, #c82333, #a71d2a)",
+          transition: "width 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
+          boxShadow: "2px 0 8px rgba(0,0,0,0.15)",
+          position: "relative",
+        }}
+      >
+        <div className="p-3 border-bottom border-white d-flex justify-content-between align-items-center" style={{ background: "rgba(255,255,255,0.1)" }}>
+          {!sidebarCollapsed && <h3 className="mb-0 fw-bold" style={{ letterSpacing: "1.5px" }}>Blood Link Admin</h3>}
+          <button
+            className="btn btn-sm btn-light"
+            onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+            aria-label={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+            style={{ width: "30px", height: "30px", padding: 0 }}
+          >
+            <i className={`fas fa-${sidebarCollapsed ? "angle-right" : "angle-left"}`}></i>
+          </button>
         </div>
-        <nav className="nav flex-column p-2">
+        <nav className="nav flex-column p-2 flex-grow-1">
           {navItems.map((item) => (
             <button
               key={item.page}
-              className={`btn text-start mb-2 w-100 ${activePage === item.page ? "bg-white text-danger" : "bg-danger text-white"}`}
+              className={`btn text-start mb-2 w-100 d-flex align-items-center ${
+                activePage === item.page ? "bg-gradient text-white shadow-lg" : "text-white"
+              }`}
               onClick={() => setActivePage(item.page)}
-              style={{ borderRadius: "5px" }}
+              style={{
+                borderRadius: "12px",
+                transition: "all 0.3s ease",
+                boxShadow: activePage === item.page ? "0 0 15px rgba(255, 0, 0, 0.8)" : "none",
+                transform: activePage === item.page ? "scale(1.05)" : "scale(1)",
+                background: activePage === item.page ? "linear-gradient(45deg, #ff4e50, #f9d423)" : undefined,
+                color: activePage === item.page ? "#fff" : "#f8f9fa",
+              }}
+              title={sidebarCollapsed ? item.label : undefined}
+              onMouseEnter={e => {
+                if (!activePage === item.page) {
+                  e.currentTarget.style.background = "rgba(255,255,255,0.2)";
+                  e.currentTarget.style.transform = "scale(1.03)";
+                }
+              }}
+              onMouseLeave={e => {
+                if (!activePage === item.page) {
+                  e.currentTarget.style.background = "";
+                  e.currentTarget.style.transform = "scale(1)";
+                }
+              }}
             >
-              <i className={`fas fa-${item.icon} me-2`}></i>{item.label}
+              <i
+                className={`fas fa-${item.icon} me-2`}
+                style={{
+                  minWidth: "20px",
+                  textAlign: "center",
+                  transition: "color 0.3s ease",
+                  color: activePage === item.page ? "#fff" : "#f8f9fa",
+                }}
+              ></i>
+              {!sidebarCollapsed && item.label}
             </button>
           ))}
         </nav>
-        <div className="mt-auto p-3 border-top border-white">
-          <button className="btn btn-outline-light w-100" onClick={handleLogout} disabled={loading}>
-            <i className="fas fa-sign-out-alt me-2"></i>Logout
+        <div className="mt-auto p-3 border-top border-white" style={{ background: "rgba(255,255,255,0.1)" }}>
+          <button
+            className="btn btn-outline-light w-100 d-flex align-items-center justify-content-center"
+            onClick={handleLogout}
+            disabled={loading}
+            title="Logout"
+            style={{
+              borderRadius: "12px",
+              transition: "all 0.3s ease",
+              boxShadow: "0 0 10px rgba(255, 255, 255, 0.7)",
+            }}
+            onMouseEnter={e => {
+              e.currentTarget.style.background = "rgba(255,255,255,0.3)";
+              e.currentTarget.style.boxShadow = "0 0 15px rgba(255, 255, 255, 1)";
+              e.currentTarget.style.transform = "scale(1.05)";
+            }}
+            onMouseLeave={e => {
+              e.currentTarget.style.background = "";
+              e.currentTarget.style.boxShadow = "0 0 10px rgba(255, 255, 255, 0.7)";
+              e.currentTarget.style.transform = "scale(1)";
+            }}
+          >
+            <i className="fas fa-sign-out-alt me-2"></i>
+            {!sidebarCollapsed && "Logout"}
           </button>
         </div>
       </div>
