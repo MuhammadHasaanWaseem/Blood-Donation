@@ -1,7 +1,9 @@
 import { supabase } from "@/lib/supabase";
 import { router } from "expo-router";
-import { LogOut, Pencil } from "lucide-react-native";
+import { LogOut, Pencil, User, FileText, Calendar, Heart, Clipboard, Clock } from "lucide-react-native";
 import { useEffect, useState } from "react";
+import { formatDistanceToNow } from "date-fns";
+
 import {
   View,
   Text,
@@ -14,10 +16,14 @@ import {
   Alert,
   KeyboardAvoidingView,
   Platform,
-  Pressable,
+  Image,
+  useWindowDimensions,
 } from "react-native";
 
 export default function ProfileScreen() {
+  const { height } = useWindowDimensions();
+  const headerHeight = height * 0.4;
+
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState(null);
@@ -34,7 +40,6 @@ export default function ProfileScreen() {
   const fetchUserProfile = async () => {
     try {
       const session = supabase.auth.session();
-
       if (!session) {
         setErrorMsg("User not logged in.");
         setLoading(false);
@@ -42,7 +47,6 @@ export default function ProfileScreen() {
       }
 
       const user = session.user;
-
       const { data, error } = await supabase
         .from("registrations")
         .select("*")
@@ -157,22 +161,80 @@ export default function ProfileScreen() {
     );
   }
 
+  const fieldIcons = {
+    name: <User color="#B71C1C" size={24} />,
+    cnic: <FileText color="#B71C1C" size={24} />,
+    age: <Calendar color="#B71C1C" size={24} />,
+    blood_group: <Heart color="#B71C1C" size={24} />,
+    medical_history: <Clipboard color="#B71C1C" size={24} />,
+  };
+
   return (
     <>
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>My Profile</Text>
-        <TouchableOpacity onPress={handleLogout}>
-          <LogOut color="#B71C1C" />
+      <View style={[styles.header, { height: '35%' ,borderRadius:40}]}>
+        <View style={styles.headerLeft}>
+          <Image
+            source={require("../../../assets/images/user-icon.png")}
+            style={styles.profileImage}
+          />
+          <Text style={styles.headerTitle}>{profile?.name || "My Profile"}</Text>
+          <Text style={styles.headerSubtitle}>Joined   {profile?.created_at
+      ? formatDistanceToNow(new Date(profile.created_at), { addSuffix: true })
+      : "-"}</Text>
+        </View>
+        <TouchableOpacity onPress={handleLogout} style={styles.logoutButton}>
+          <LogOut color="#B71C1C" size={24} />
         </TouchableOpacity>
       </View>
 
       <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 80 }}>
-        {["name", "cnic", "blood_group", "age", "medical_history"].map((field) => (
-          <View key={field} style={styles.profileCard}>
-            <Text style={styles.cardLabel}>{field.replace("_", " ").toUpperCase()}</Text>
-            <Text style={styles.cardValue}>{profile[field] || "-"}</Text>
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Personal Information</Text>
+          {["name", "cnic", "age"].map((field) => (
+            <View key={field} style={styles.profileCard}>
+              <View style={styles.cardRow}>
+                {fieldIcons[field]}
+                <View style={styles.cardText}>
+                  <Text style={styles.cardLabel}>
+                    {field.replace("_", " ").toUpperCase()}
+                  </Text>
+                  <Text style={styles.cardValue}>{profile[field] || "-"}</Text>
+                </View>
+              </View>
+            </View>
+          ))}
+        </View>
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Medical Information</Text>
+          {["blood_group", "medical_history"].map((field) => (
+            <View key={field} style={styles.profileCard}>
+              <View style={styles.cardRow}>
+                {fieldIcons[field]}
+                <View style={styles.cardText}>
+                  <Text style={styles.cardLabel}>
+                    {field.replace("_", " ").toUpperCase()}
+                  </Text>
+                  <Text style={styles.cardValue}>{profile[field] || "-"}</Text>
+                </View>
+              </View>
+            </View>
+          ))}
+        </View>
+        <View style={styles.section}>
+          <View style={styles.profileCard}>
+            <View style={styles.cardRow}>
+              <Clock color="#B71C1C" size={24} />
+              <View style={styles.cardText}>
+                <Text style={styles.cardLabel}>LAST UPDATED</Text>
+                <Text style={styles.cardValue}>
+                  {profile.updated_at
+                    ? new Date(profile.updated_at).toLocaleString()
+                    : "-"}
+                </Text>
+              </View>
+            </View>
           </View>
-        ))}
+        </View>
       </ScrollView>
 
       <TouchableOpacity style={styles.fab} onPress={openEditModal}>
@@ -185,25 +247,35 @@ export default function ProfileScreen() {
         transparent
         onRequestClose={() => setEditModalVisible(false)}
       >
-        <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={styles.modalContainer}>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          style={styles.modalContainer}
+        >
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>Edit Profile</Text>
             <ScrollView>
-              {["name", "cnic", "blood_group", "age", "medical_history"].map((field) => (
-                <View key={field} style={styles.inputWrapper}>
-                  <Text style={styles.inputLabel}>{field.replace("_", " ").toUpperCase()}</Text>
-                  <TextInput
-                    value={form[field]}
-                    onChangeText={(text) => handleInputChange(field, text)}
-                    style={styles.input}
-                    keyboardType={field === "age" ? "numeric" : "default"}
-                    multiline={field === "medical_history"}
-                  />
-                </View>
-              ))}
+              {["name", "cnic", "blood_group", "age", "medical_history"].map(
+                (field) => (
+                  <View key={field} style={styles.inputWrapper}>
+                    <Text style={styles.inputLabel}>
+                      {field.replace("_", " ").toUpperCase()}
+                    </Text>
+                    <TextInput
+                      value={form[field]}
+                      onChangeText={(text) => handleInputChange(field, text)}
+                      style={styles.input}
+                      keyboardType={field === "age" ? "numeric" : "default"}
+                      multiline={field === "medical_history"}
+                    />
+                  </View>
+                )
+              )}
             </ScrollView>
             <View style={styles.buttonRow}>
-              <TouchableOpacity style={styles.cancelButton} onPress={() => setEditModalVisible(false)}>
+              <TouchableOpacity
+                style={styles.cancelButton}
+                onPress={() => setEditModalVisible(false)}
+              >
                 <Text style={styles.cancelText}>Cancel</Text>
               </TouchableOpacity>
               <TouchableOpacity style={styles.saveButton} onPress={updateProfile}>
@@ -219,25 +291,40 @@ export default function ProfileScreen() {
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: "#FDFDFD",
-    paddingHorizontal: 20,
+    backgroundColor: "white",
+    flex: 1,
   },
   header: {
-    paddingTop: 50,
+    backgroundColor: "#B71C1C",
     paddingHorizontal: 20,
-    paddingBottom: 20,
-    backgroundColor: "#FFF",
-    flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    elevation: 4,
-    borderBottomColor: "#eee",
-    borderBottomWidth: 1,
+    flexDirection: "row",
+  },
+  headerLeft: {
+    flexDirection: "column",
+    alignItems: "center",
+  },
+  profileImage: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    marginBottom: 10,
   },
   headerTitle: {
     fontSize: 24,
     fontWeight: "700",
-    color: "#B71C1C",
+    color: "white",
+  },
+  headerSubtitle: {
+    fontSize: 16,
+    color: "#FFF",
+    opacity: 0.8,
+  },
+  logoutButton: {
+    backgroundColor: "#FFF",
+    padding: 10,
+    borderRadius: 5,
   },
   centeredContainer: {
     flex: 1,
@@ -255,6 +342,16 @@ const styles = StyleSheet.create({
     fontSize: 16,
     textAlign: "center",
   },
+  section: {
+    marginBottom: 20,
+    paddingHorizontal: 20,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#B71C1C",
+    marginBottom: 10,
+  },
   profileCard: {
     backgroundColor: "#FFF",
     marginBottom: 16,
@@ -267,6 +364,13 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 5,
     elevation: 3,
+  },
+  cardRow: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  cardText: {
+    marginLeft: 10,
   },
   cardLabel: {
     color: "#B71C1C",

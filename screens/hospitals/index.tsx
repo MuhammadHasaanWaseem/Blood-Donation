@@ -7,8 +7,10 @@ import {
   Text,
   StyleSheet,
   ActivityIndicator,
+  Linking,
 } from "react-native";
 import { supabase } from "@/lib/supabase";
+import { Hospital, MapPin, Phone, Mail } from "lucide-react-native";
 
 export default function HospitalList() {
   const [hospitals, setHospitals] = useState([]);
@@ -38,10 +40,13 @@ export default function HospitalList() {
     });
   }
 
+  const openPhone = (number: string) => Linking.openURL(`tel:${number}`);
+  const openEmail = (email: string) => Linking.openURL(`mailto:${email}`);
+
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#B71C1C" />
+        <ActivityIndicator size="large" color="#EF4444" />
       </View>
     );
   }
@@ -49,23 +54,66 @@ export default function HospitalList() {
   return (
     <View style={styles.container}>
       <Text style={styles.header}>Available Hospitals</Text>
+
       <FlatList
         data={hospitals}
         keyExtractor={(item) => item.id}
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: 40 }}
+        contentContainerStyle={{ paddingBottom: 80 }}
         renderItem={({ item }) => (
           <TouchableOpacity
             style={styles.card}
             activeOpacity={0.85}
             onPress={() => handleHospitalPress(item.id)}
           >
-            <Text style={styles.name}>{item.name}</Text>
-            <Text style={styles.location}>{item.location}</Text>
-            <Text style={styles.manager}>Manager: {item.manager}</Text>
-            <Text style={styles.website}>Website: {item.website}</Text>
-            <Text style={styles.address}>🏥 {item.address}</Text>
-            <Text style={styles.contact}>📞 {item.contactNumber}</Text>
+            <View style={styles.cardHeader}>
+              <View style={[styles.iconContainer, styles.hospitalIcon]}>
+                <Hospital size={20} color="#FFFFFF" />
+              </View>
+              <Text style={styles.cardTitle}>{item.name || "Unknown Hospital"}</Text>
+            </View>
+
+            {item.location && (
+              <View style={styles.infoRow}>
+                <MapPin size={18} color="#EF4444" />
+                <Text style={styles.infoText}>{item.location}</Text>
+              </View>
+            )}
+
+            {item.manager && (
+              <Text style={styles.subInfo}>Manager: {item.manager}</Text>
+            )}
+
+            {item.website && (
+              <Text style={[styles.subInfo, { color: "#3B82F6" }]}>
+                Website: {item.website}
+              </Text>
+            )}
+
+            {item.address && (
+              <Text style={styles.subInfo}>🏥 {item.address}</Text>
+            )}
+
+            <View style={styles.contactContainer}>
+              {item.contactNumber && (
+                <TouchableOpacity
+                  style={styles.contactButton}
+                  onPress={() => openPhone(item.contactNumber)}
+                >
+                  <Phone size={16} color="#3B82F6" />
+                  <Text style={styles.contactText}>Call</Text>
+                </TouchableOpacity>
+              )}
+              {item.email && (
+                <TouchableOpacity
+                  style={styles.contactButton}
+                  onPress={() => openEmail(item.email)}
+                >
+                  <Mail size={16} color="#3B82F6" />
+                  <Text style={styles.contactText}>Email</Text>
+                </TouchableOpacity>
+              )}
+            </View>
           </TouchableOpacity>
         )}
       />
@@ -76,61 +124,94 @@ export default function HospitalList() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#F3F4F6",
-    padding: 16,
+    backgroundColor: "#F9FAFB",
+    paddingHorizontal: 20,
+    paddingTop: 40,
   },
   header: {
-    fontSize: 24,
-    fontWeight: "700",
-    marginBottom: 16,
-    color: "#1F2937",
+    fontSize: 28,
+    fontWeight: "800",
+    color: "#111827",
+    marginBottom: 20,
+    textAlign: "center",
   },
   loadingContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#F3F4F6",
+    backgroundColor: "#F9FAFB",
   },
   card: {
     backgroundColor: "#FFFFFF",
-    padding: 18,
     borderRadius: 16,
-    marginBottom: 14,
+    padding: 20,
+    marginBottom: 16,
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.08,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
     shadowRadius: 6,
-    elevation: 4,
-    borderLeftWidth: 5,
-    borderLeftColor: "#B71C1C",
+    elevation: 2,
+    borderWidth: 1,
+    borderColor: "#F3F4F6",
   },
-  name: {
+  cardHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 16,
+  },
+  iconContainer: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 12,
+  },
+  hospitalIcon: {
+    backgroundColor: "#EF4444",
+  },
+  cardTitle: {
     fontSize: 18,
     fontWeight: "700",
-    color: "#111827",
+    color: "#1F2937",
+    flexShrink: 1,
   },
-  location: {
+  infoRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 10,
+  },
+  infoText: {
     fontSize: 15,
     color: "#374151",
-    marginBottom: 4,
+    marginLeft: 10,
+    flexShrink: 1,
   },
-  manager: {
+  subInfo: {
     fontSize: 14,
     color: "#6B7280",
+    marginTop: 8,
   },
-  website: {
+  contactContainer: {
+    flexDirection: "row",
+    marginTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: "#F3F4F6",
+    paddingTop: 16,
+    justifyContent: "space-around",
+  },
+  contactButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 10,
+    backgroundColor: "#F3F4F6",
+  },
+  contactText: {
     fontSize: 14,
     color: "#3B82F6",
-    marginBottom: 4,
-  },
-  address: {
-    fontSize: 14,
-    color: "#4B5563",
-  },
-  contact: {
-    fontSize: 14,
-    color: "#B71C1C",
     fontWeight: "600",
-    marginTop: 2,
+    marginLeft: 6,
   },
 });

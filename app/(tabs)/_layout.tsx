@@ -1,73 +1,59 @@
-import { Tabs, useRouter } from 'expo-router';
-import React from 'react';
-import { Platform, View } from 'react-native';
-import {  Home, MailOpen, Search, User } from 'lucide-react-native';
+import { Tabs } from "expo-router";
+import React from "react";
+import { Platform, View } from "react-native";
+import { Home, Search, MailOpen, User } from "lucide-react-native";
 
 export default function TabLayout() {
-  const router = useRouter();
-
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: 'white',
-        tabBarActiveBackgroundColor: 'black',
         headerShown: false,
-        tabBarStyle: [styles.tabBar,Platform.select({
-          
-          ios: { position: 'absolute' },
-          default: { backgroundColor: 'black' },
-        }),]
+        tabBarShowLabel: false,
+        tabBarActiveTintColor: "#EF4444",       // accent red
+        tabBarInactiveTintColor: "#9CA3AF",     // neutral gray
+        tabBarStyle: [
+          styles.tabBar,
+         
+        ],
       }}
     >
-    
       <Tabs.Screen
         name="index"
-        
         options={{
-          
-          title: '',
           tabBarIcon: ({ color, focused }) => (
-            <View style={{ alignItems: 'center' }}>
-              <Home fill={focused ? 'white' : ''} color={'white'} size={24} />
-              {focused && <View style={styles.activeIndicator} />}
-              
-            </View>
+            <IconWithIndicator focused={focused}>
+              <Home size={24} color={color} />
+            </IconWithIndicator>
           ),
         }}
       />
       <Tabs.Screen
         name="explore"
         options={{
-          title: '',
           tabBarIcon: ({ color, focused }) => (
-            <View style={{ alignItems: 'center' }}>
-              <Search fill={focused ? 'white' : ''} color={'white'} size={24} />
-              {focused && <View style={styles.activeIndicator} />}
-            </View>
+            <IconWithIndicator focused={focused}>
+              <Search size={24} color={color} />
+            </IconWithIndicator>
           ),
         }}
       />
       <Tabs.Screen
         name="donor"
         options={{
-          title: '',
           tabBarIcon: ({ color, focused }) => (
-            <View style={{ alignItems: 'center' }}>
-              <MailOpen strokeWidth={focused ? 3 : 2} color={'white'} size={24} />
-              {focused && <View style={styles.activeIndicator} />}
-            </View>
+            <IconWithIndicator focused={focused}>
+              <MailOpen size={24} color={color} />
+            </IconWithIndicator>
           ),
         }}
       />
       <Tabs.Screen
         name="profile"
         options={{
-          title: '',
           tabBarIcon: ({ color, focused }) => (
-            <View style={{ alignItems: 'center' }}>
-              <User fill={focused ? 'white' : ''} color={'white'} size={24} />
-              {focused && <View style={styles.activeIndicator} />}
-            </View>
+            <IconWithIndicator focused={focused}>
+              <User size={24} color={color} />
+            </IconWithIndicator>
           ),
         }}
       />
@@ -75,23 +61,43 @@ export default function TabLayout() {
   );
 }
 
+const IconWithIndicator = ({
+  children,
+  focused,
+}: {
+  children: React.ReactNode;
+  focused: boolean;
+}) => (
+  <View style={{ alignItems: "center" }}>
+    {children}
+    {focused && <View style={styles.activeIndicator} />}
+  </View>
+);
+
 const styles = {
-  activeIndicator: {
-    width: 70,
-    height: 1,
-    backgroundColor: 'white',
-    marginTop: 2,
-    borderRadius: 3,
-  },
   tabBar: {
-    backgroundColor: 'black',
+    backgroundColor: "#FFFFFF",
     borderTopWidth: 0,
-    elevation: 8,
-    shadowColor: '#000',
-    shadowOpacity: 0.1,
+    elevation: 12,                // Android shadow
+    height: 64,
+    paddingBottom: Platform.OS === "ios" ? 24 : 8,
+    paddingTop: 8,
+    shadowColor: "#000",
+    shadowOpacity: 0.06,
     shadowRadius: 10,
-    height: 60,
-    paddingBottom: Platform.OS === 'ios' ? 20 : 5,
-    paddingTop: 5,
+  },
+  iosTabBar: {
+    position: "absolute",
+    left: 16,
+    right: 16,
+    bottom: 16,
+    borderRadius: 30,
+  },
+  activeIndicator: {
+    width: 36,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: "#EF4444",
+    marginTop: 4,
   },
 };

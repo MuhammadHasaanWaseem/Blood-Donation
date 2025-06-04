@@ -1,0 +1,290 @@
+import { useEffect, useState } from "react";
+=======
+import { useRouter } from "expo-router";
+import { useEffect, useState } from "react";
+
+>>>>>>> REPLACE
+<<<<<<< SEARCH
+export default function DoctorsList() {
+  const [doctors, setDoctors] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const router = useRouter();
+
+  useEffect(() => {
+    fetchDoctors();
+  }, []);
+=======
+export default function DoctorsList() {
+  const [doctors, setDoctors] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
+
+  useEffect(() => {
+    fetchDoctors();
+  }, []);
+>>>>>>> REPLACE
+<<<<<<< SEARCH
+  async function fetchDoctors() {
+    setLoading(true);
+    const { data, error } = await supabase.from("doctors").select("*");
+    if (error) {
+      console.error(error);
+      setLoading(false);
+      return;
+    }
+    setDoctors(data || []);
+    setLoading(false);
+  }
+=======
+  async function fetchDoctors() {
+    setLoading(true);
+    setError(null);
+    const { data, error } = await supabase.from("doctors").select("*");
+    if (error) {
+      console.error(error);
+      setError("Failed to load doctors data. Please try again later.");
+      setLoading(false);
+      return;
+    }
+    setDoctors(data || []);
+    setLoading(false);
+  }
+>>>>>>> REPLACE
+<<<<<<< SEARCH
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#EF4444" />
+      </View>
+    );
+  }
+
+  return (
+    <View style={styles.container}>
+      <Text style={styles.header}>Available Doctors</Text>
+=======
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#EF4444" />
+      </View>
+    );
+  }
+
+  if (error) {
+    return (
+      <View style={styles.errorContainer}>
+        <Text style={styles.errorText}>{error}</Text>
+      </View>
+    );
+  }
+
+  return (
+    <View style={styles.container}>
+      <Text style={styles.header}>Available Doctors</Text>
+>>>>>>> REPLACE
+<<<<<<< SEARCH
+/* ---------- styles ---------- */
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: "#F9FAFB",
+    paddingHorizontal: 20,
+    paddingTop: 40,
+  },
+  header: {
+    fontSize: 28,
+    fontWeight: "800",
+    color: "#111827",
+    marginBottom: 20,
+    textAlign: "center",
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#F9FAFB",
+  },
+  card: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 16,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 6,
+    elevation: 2,
+    borderWidth: 1,
+    borderColor: "#F3F4F6",
+  },
+  cardHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 16,
+  },
+  iconContainer: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 12,
+  },
+  docIcon: {
+    backgroundColor: "#EF4444",
+  },
+  cardTitle: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#1F2937",
+    flexShrink: 1,
+  },
+  infoRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 10,
+  },
+  infoText: {
+    fontSize: 15,
+    color: "#374151",
+    marginLeft: 10,
+    flexShrink: 1,
+  },
+  subInfo: {
+    fontSize: 14,
+    color: "#6B7280",
+    marginTop: 8,
+  },
+  contactContainer: {
+    flexDirection: "row",
+    marginTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: "#F3F4F6",
+    paddingTop: 16,
+    justifyContent: "space-around",
+  },
+  contactButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 10,
+    backgroundColor: "#F3F4F6",
+  },
+  contactText: {
+    fontSize: 14,
+    color: "#3B82F6",
+    fontWeight: "600",
+    marginLeft: 6,
+  },
+});
+=======
+/* ---------- styles ---------- */
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: "#F9FAFB",
+    paddingHorizontal: 20,
+    paddingTop: 40,
+  },
+  header: {
+    fontSize: 28,
+    fontWeight: "800",
+    color: "#111827",
+    marginBottom: 20,
+    textAlign: "center",
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#F9FAFB",
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#F9FAFB",
+    paddingHorizontal: 20,
+  },
+  errorText: {
+    fontSize: 16,
+    color: "#EF4444",
+    textAlign: "center",
+  },
+  card: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 16,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 6,
+    elevation: 2,
+    borderWidth: 1,
+    borderColor: "#F3F4F6",
+  },
+  cardHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 16,
+  },
+  iconContainer: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 12,
+  },
+  docIcon: {
+    backgroundColor: "#EF4444",
+  },
+  cardTitle: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#1F2937",
+    flexShrink: 1,
+  },
+  infoRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 10,
+  },
+  infoText: {
+    fontSize: 15,
+    color: "#374151",
+    marginLeft: 10,
+    flexShrink: 1,
+  },
+  subInfo: {
+    fontSize: 14,
+    color: "#6B7280",
+    marginTop: 8,
+  },
+  contactContainer: {
+    flexDirection: "row",
+    marginTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: "#F3F4F6",
+    paddingTop: 16,
+    justifyContent: "space-around",
+  },
+  contactButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 10,
+    backgroundColor: "#F3F4F6",
+  },
+  contactText: {
+    fontSize: 14,
+    color: "#3B82F6",
+    fontWeight: "600",
+    marginLeft: 6,
+  },
+});
