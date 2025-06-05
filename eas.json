@@ -1,21 +1,28 @@
 {
+  "cli": {
+    "appVersionSource": "local"   
+  },
   "build": {
     "preview": {
       "android": {
-        "buildType": "apk"
+        "buildType": "apk"        
       }
     },
     "preview2": {
       "android": {
-        "gradleCommand": ":app:assembleRelease"
+        "gradleCommand": ":app:assembleRelease"  
       }
     },
     "preview3": {
-      "developmentClient": true
+      "developmentClient": true   
     },
     "preview4": {
-      "distribution": "internal"
+      "distribution": "internal"  
     },
-    "production": {}
+    "production": {
+      "android": {
+        "buildType": "apk"       
+      }
+    }
   }
 }

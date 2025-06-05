@@ -32,6 +32,18 @@ export default function RootLayout() {
       }
     }
     checkSession();
+
+    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
+      if (session && session.user && session.user.email_confirmed_at) {
+        setInitialRoute('(tabs)');
+      } else {
+        setInitialRoute('index');
+      }
+    });
+
+    return () => {
+      authListener?.unsubscribe();
+    };
   }, []);
 
   if (!loaded || isCheckingSession) {

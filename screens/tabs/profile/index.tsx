@@ -178,7 +178,7 @@ export default function ProfileScreen() {
             style={styles.profileImage}
           />
           <Text style={styles.headerTitle}>{profile?.name || "My Profile"}</Text>
-          <Text style={styles.headerSubtitle}>Joined   {profile?.created_at
+          <Text style={styles.headerSubtitle}>Joined {profile?.created_at
       ? formatDistanceToNow(new Date(profile.created_at), { addSuffix: true })
       : "-"}</Text>
         </View>
